@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sistema de Transportes</title>
+    <link rel="stylesheet" href="_colors.css">
+    <link rel="stylesheet" href="login.css">
+    <link rel="shortcut icon" href="assets/favcom.png" type="image/x-icon">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <img src="assets/team350.jpeg" alt="Logo" class="login-logo">
+            <h2>Login</h2>
+            <form id="loginForm">
+                <div class="input-group">
+                    <input type="email" id="email" required placeholder="Email">
+                </div>
+                <div class="input-group">
+                    <input type="password" id="password" required placeholder="Senha">
+                </div>
+                <button type="submit">Entrar</button>
+            </form>
+            <div id="error-message" class="error-message"></div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-auth-compat.js"></script>
+    <script>
+        // Inicialização do Firebase
+        const firebaseConfig = {
+            // Suas configurações do Firebase aqui
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('error-message');
+
+            try {
+                const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+                const idToken = await userCredential.user.getIdToken();
+                
+                // Enviar token para o backend
+                const response = await fetch('http://localhost:3000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ idToken })
+                });
+
+                if (response.ok) {
+                    // Salvar token no localStorage
+                    localStorage.setItem('authToken', idToken);
+                    // Redirecionar para o dashboard
+                    window.location.href = 'dashboard.html';
+                } else {
+                    throw new Error('Falha na autenticação');
+                }
+            } catch (error) {
+                errorMessage.textContent = 'Email ou senha inválidos';
+                errorMessage.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
